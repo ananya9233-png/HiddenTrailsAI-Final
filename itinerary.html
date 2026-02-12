@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Your Itinerary | HiddenTrails.AI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen">
+
+<!-- NAVBAR -->
+<nav class="bg-white shadow px-6 py-4 flex justify-between items-center sticky top-0 z-50">
+  <h1 class="text-2xl font-bold text-green-600">HiddenTrails.AI</h1>
+  <div class="space-x-6">
+    <a href="index.html" class="text-gray-600 hover:text-green-600">Home</a>
+    <a href="dashboard.html" class="text-gray-600 hover:text-green-600">Dashboard</a>
+    <a href="saved.html" class="text-gray-600 hover:text-green-600">Saved</a>
+    <a href="auth.html" class="bg-green-600 text-white px-4 py-2 rounded-lg">Logout</a>
+  </div>
+</nav>
+
+<div class="flex min-h-[calc(100vh-72px)]">
+
+  <!-- SIDEBAR -->
+  <aside class="w-64 bg-white shadow p-5 space-y-4">
+    <a href="dashboard.html" class="block text-gray-700 hover:text-green-600">🏠 Dashboard</a>
+    <a href="plantrips.html" class="block text-gray-700 hover:text-green-600">🧭 Plan Trip</a>
+    <a href="saved.html" class="block font-semibold text-green-600">💾 Saved Trips</a>
+    <a href="rewards.html" class="block text-gray-700 hover:text-green-600">🎁 Rewards</a>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="flex-1 p-8">
+    <div class="max-w-4xl mx-auto space-y-6">
+
+      <h2 id="pageTitle" class="text-3xl font-bold text-center">
+        Loading Itinerary...
+      </h2>
+
+      
+      <div id="heroSection" class="relative h-80 rounded-xl overflow-hidden mb-6">
+  <img id="heroImage" class="w-full h-full object-cover">
+  <div class="absolute inset-0 bg-black bg-opacity-50 flex flex-col justify-center items-center text-white">
+    <h1 id="tripTitle" class="text-4xl font-bold"></h1>
+    <p id="budgetInfo" class="text-lg mt-2"></p>
+  </div>
+</div>
+
+<div id="daysContainer" class="space-y-6"></div>
+
+      <div class="flex justify-center gap-4 mt-6">
+        <button id="regenBtn"
+          class="bg-yellow-400 px-6 py-3 rounded-lg font-bold hover:bg-yellow-500">
+          Regenerate AI 🔁
+        </button>
+
+        <a href="saved.html"
+           class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700">
+          Back to Saved Trips
+        </a>
+      </div>
+
+    </div>
+  </main>
+
+</div>
+
+<!-- SCRIPT -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  updateDoc
+} from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyCtSKfk3j-RaExSaumaeGoQlJQckBDZ32c",
+
+ 
+  authDomain: "hiddentrails-ai.firebaseapp.com",
+  projectId: "hiddentrails-ai",
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const params = new URLSearchParams(window.location.search);
+const id = params.get("id");
+
+const heroImage = document.getElementById("heroImage");
+const tripTitle = document.getElementById("tripTitle");
+const budgetInfo = document.getElementById("budgetInfo");
+const daysContainer = document.getElementById("daysContainer");
+const regenBtn = document.getElementById("regenBtn");
+
+let trip;
+
+// ✅ Unsplash Function
+async function getUnsplashImage(query) {
+  const accessKey = "YOUR_UNSPLASH_ACCESS_KEY";
+
+  const res = await fetch(
+    `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=1&orientation=landscape&client_id=${accessKey}`
+  );
+
+  const data = await res.json();
+
+  if (data.results && data.results.length > 0) {
+    return data.results[0].urls.regular;
+  }
+
+  return "https://via.placeholder.com/800x500?text=No+Image";
+}
+
+// ✅ Load Trip
+// ✅ Load Trip
+async function loadTrip() {
+  const docRef = doc(db, "trips", id);
+  const snap = await getDoc(docRef);
+
+  if (!snap.exists()) {
+    daysContainer.innerHTML = "Trip not found.";
+    return;
+  }
+
+  trip = snap.data();
+
+  // Hero Image
+  heroImage.src = await getUnsplashImage(
+    trip.destination + " skyline"
+  );
+
+  tripTitle.innerText =
+    `${trip.destination} – ${trip.days.length} Day ${trip.preference} Trip`;
+
+  budgetInfo.innerText =
+    `Budget: ₹${trip.budget} | Estimated: ₹${trip.total_estimated_cost}`;
+
+  daysContainer.innerHTML = "";
+
+  for (const day of trip.days) {
+    const card = document.createElement("div");
+    card.className = "bg-white p-6 rounded-xl shadow";
+
+    const imageUrl = await getUnsplashImage(
+      trip.destination + " " + day.title + " landmark"
+    );
+
+    card.innerHTML = `
+      <h2 class="text-2xl font-bold mb-3">
+        Day ${day.day}: ${day.title}
+      </h2>
+
+      <img 
+        src="${imageUrl}" 
+        class="rounded-lg mb-4 w-full h-56 object-cover"
+      >
+
+      <p><strong>Morning:</strong> ${day.morning}</p>
+      <p><strong>Afternoon:</strong> ${day.afternoon}</p>
+      <p><strong>Evening:</strong> ${day.evening}</p>
+
+      <p class="mt-3 font-semibold text-green-600">
+        Estimated Cost: ₹${day.estimated_cost}
+      </p>
+    `;
+
+    daysContainer.appendChild(card);
+  }
+}
+
+// IMPORTANT: Call it OUTSIDE the function
+loadTrip();
+
+
+
+// ✅ Regenerate Button
+regenBtn.addEventListener("click", async () => {
+  if (!confirm("Regenerate itinerary?")) return;
+
+  const res = await fetch("http://127.0.0.1:5000/generate-itinerary", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      destination: trip.destination,
+      days: trip.days.length,
+      preference: trip.preference,
+      budget: trip.budget
+    })
+  });
+
+  const newData = await res.json();
+
+  if (!newData.days) {
+    alert("AI regeneration failed");
+    return;
+  }
+
+  await updateDoc(doc(db, "trips", id), {
+    total_estimated_cost: newData.total_estimated_cost,
+    days: newData.days,
+    regeneratedAt: new Date()
+  });
+
+  alert("Itinerary regenerated!");
+  location.reload();
+});
+</script>
+
+
+
+</body>
+</html>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Upload Hidden Gem | HiddenTrails.AI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+
+  <div class="max-w-xl mx-auto mt-12 bg-white p-8 rounded-lg shadow">
+    <h1 class="text-3xl font-bold mb-6">Upload Hidden Gem</h1>
+
+    <form class="space-y-4">
+
+      <div>
+        <label class="block font-medium mb-1">Place Name</label>
+        <input type="text" placeholder="Enter place name"
+          class="w-full border p-2 rounded" />
+      </div>
+
+      <div>
+        <label class="block font-medium mb-1">Location</label>
+        <input type="text" placeholder="City / State"
+          class="w-full border p-2 rounded" />
+      </div>
+
+      <div>
+        <label class="block font-medium mb-1">Description</label>
+        <textarea rows="4" placeholder="Describe the hidden gem"
+          class="w-full border p-2 rounded"></textarea>
+      </div>
+
+      <div>
+        <label class="block font-medium mb-1">Upload Image</label>
+        <input type="file" class="w-full border p-2 rounded" />
+      </div>
+
+      <button type="button"
+        class="w-full bg-green-600 text-white py-2 rounded text-lg">
+        Upload Gem
+      </button>
+
+    </form>
+  </div>
+
+</body>
+</html>

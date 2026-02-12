@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Sign Up | HiddenTrails.AI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gradient-to-br from-green-50 to-blue-50 min-h-screen">
+
+  <!-- NAVBAR -->
+  <nav class="bg-white shadow px-8 py-4 flex justify-between items-center">
+    <a href="index.html" class="text-2xl font-bold text-green-600">
+      HiddenTrails.AI
+    </a>
+  </nav>
+
+  <!-- SIGNUP CARD -->
+  <div class="flex items-center justify-center min-h-[calc(100vh-80px)]">
+    <div class="bg-white p-8 rounded-2xl shadow-xl w-96">
+
+      <h2 class="text-2xl font-bold text-center text-green-600 mb-6">
+        Create Account
+      </h2>
+
+      <!-- EMAIL -->
+      <input
+        id="email"
+        type="email"
+        placeholder="Email"
+        class="w-full border p-3 rounded-lg mb-4 focus:ring-2 focus:ring-green-500 outline-none"
+      />
+
+      <!-- PASSWORD -->
+      <input
+        id="password"
+        type="password"
+        placeholder="Password"
+        class="w-full border p-3 rounded-lg mb-4 focus:ring-2 focus:ring-green-500 outline-none"
+      />
+
+      <!-- CONFIRM PASSWORD -->
+      <input
+        id="confirmPassword"
+        type="password"
+        placeholder="Confirm Password"
+        class="w-full border p-3 rounded-lg mb-6 focus:ring-2 focus:ring-green-500 outline-none"
+      />
+
+      <!-- SIGNUP BUTTON -->
+      <button
+        id="signupBtn"
+        class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition"
+      >
+        Create Account
+      </button>
+
+      <!-- LOGIN LINK -->
+      <p class="text-center text-gray-500 mt-4 text-sm">
+        Already have an account?
+        <a href="auth.html" class="text-green-600 font-semibold hover:underline">
+          Login
+        </a>
+      </p>
+
+    </div>
+  </div>
+
+  <!-- FIREBASE SIGNUP SCRIPT -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword } from
+      "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
+
+    // 🔐 SAME Firebase config used everywhere else
+    const firebaseConfig = {
+      apiKey: "AIzaSyCtSKfk3j-RaExSaumaeGoQlJQckBDZ32c",
+      authDomain: "hiddentrails-ai.firebaseapp.com",
+      projectId: "hiddentrails-ai",
+      storageBucket: "hiddentrails-ai.firebasestorage.app",
+      messagingSenderId: "739490816318",
+      appId: "1:739490816318:web:3d1adc77b25cf1dfb70c6f"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    document.getElementById("signupBtn").addEventListener("click", () => {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const confirmPassword = document.getElementById("confirmPassword").value.trim();
+
+      if (!email || !password || !confirmPassword) {
+        alert("All fields are required");
+        return;
+      }
+
+      if (password.length < 6) {
+        alert("Password must be at least 6 characters");
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        alert("Passwords do not match");
+        return;
+      }
+
+      createUserWithEmailAndPassword(auth, email, password)
+        .then(() => {
+          alert("Account created successfully 🎉");
+          window.location.href = "auth.html";
+        })
+        .catch(err => {
+          alert(err.code + " : " + err.message);
+        });
+    });
+  </script>
+
+</body>
+</html>

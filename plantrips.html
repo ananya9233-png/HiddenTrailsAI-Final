@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Plan Your Trip | HiddenTrails.AI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen">
+
+<!-- NAVBAR -->
+<nav class="bg-white shadow px-6 py-4 flex justify-between items-center sticky top-0 z-50">
+  <h1 class="text-2xl font-bold text-green-600">HiddenTrails.AI</h1>
+  <div class="space-x-6">
+    <a href="index.html" class="text-gray-600 hover:text-green-600">Home</a>
+    <a href="dashboard.html" class="text-gray-600 hover:text-green-600">Dashboard</a>
+    <a href="saved.html" class="text-gray-600 hover:text-green-600">Saved</a>
+    <a href="auth.html" class="bg-green-600 text-white px-4 py-2 rounded-lg">Logout</a>
+  </div>
+</nav>
+
+<div class="flex min-h-[calc(100vh-72px)]">
+
+  <!-- SIDEBAR -->
+  <aside class="w-64 bg-white shadow p-5 space-y-4">
+    <a href="dashboard.html" class="block text-gray-700 hover:text-green-600">🏠 Dashboard</a>
+    <a href="plantrips.html" class="block font-semibold text-green-600">🧭 Plan Trip</a>
+    <a href="saved.html" class="block text-gray-700 hover:text-green-600">💾 Saved Trips</a>
+    <a href="rewards.html" class="block text-gray-700 hover:text-green-600">🎁 Rewards</a>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="flex-1 p-8">
+    <div class="max-w-3xl mx-auto bg-white p-8 rounded-xl shadow">
+
+      <h2 class="text-3xl font-bold mb-6 text-center">Plan Your Trip ✈️</h2>
+
+      <form id="tripForm" class="space-y-5">
+
+        <div>
+          <label class="block font-semibold">Destination</label>
+          <input id="destination" type="text" placeholder="Goa, Delhi, Kolkata"
+            class="w-full border rounded-lg px-4 py-2">
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block font-semibold">Arrival Date</label>
+            <input id="startDate" type="date"
+              class="w-full border rounded-lg px-4 py-2">
+          </div>
+          <div>
+            <label class="block font-semibold">Return Date</label>
+            <input id="endDate" type="date"
+              class="w-full border rounded-lg px-4 py-2">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block font-semibold">Number of Days</label>
+            <input id="days" type="number" placeholder="3"
+              class="w-full border rounded-lg px-4 py-2">
+          </div>
+          <div>
+            <label class="block font-semibold">Budget (₹)</label>
+            <input id="budget" type="number" placeholder="30000"
+              class="w-full border rounded-lg px-4 py-2">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold">Travel Preference</label>
+          <select id="preference"
+            class="w-full border rounded-lg px-4 py-2">
+            <option>Adventure</option>
+            <option>Relaxation</option>
+            <option>Culture</option>
+            <option>Nature</option>
+            <option>Luxury</option>
+          </select>
+        </div>
+
+        <button
+          type="submit"
+          id="generateBtn"
+          class="w-full bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700">
+          Generate Itinerary
+        </button>
+
+      </form>
+
+    </div>
+  </main>
+
+</div>
+
+<!-- SCRIPT -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+  import {
+    getFirestore,
+    collection,
+    addDoc
+  } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+
+  // 🔹 Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyCtSKfk3j-RaExSaumaeGoQlJQckBDZ32c",
+    authDomain: "hiddentrails-ai.firebaseapp.com",
+    projectId: "hiddentrails-ai",
+    storageBucket: "hiddentrails-ai.firebasestorage.app",
+    messagingSenderId: "739490816318",
+    appId: "1:739490816318:web:3d1adc77b25cf1dfb70c6f"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  const form = document.getElementById("tripForm");
+  const btn = document.getElementById("generateBtn");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const destination = document.getElementById("destination").value.trim();
+    const days = parseInt(document.getElementById("days").value);
+    const budget = parseInt(document.getElementById("budget").value);
+    const preference = document.getElementById("preference").value;
+    const startDate = document.getElementById("startDate").value;
+    const endDate = document.getElementById("endDate").value;
+    if (!destination || !days || !budget || !preference) {
+  alert("Please fill all required fields including budget");
+  btn.disabled = false;
+  btn.innerText = "Generate Itinerary";
+  return;
+}
+
+    
+
+    btn.disabled = true;
+    btn.innerText = "Generating...";
+
+    try {
+      // 🔹 1. Call Groq backend
+      const response = await fetch("http://127.0.0.1:5000/generate-itinerary", {
+
+      method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+  destination,
+  days,
+  preference,
+  budget
+})
+
+        // body: JSON.stringify({ destination, days })
+      });
+     if (!response.ok) {
+  const errData = await response.json();
+  console.error("Backend Error:", errData);
+  alert("Backend error: " + errData.error);
+  return;
+}
+
+const data = await response.json();
+
+      
+      if (!data || !data.days || !Array.isArray(data.days)) {
+
+      
+        alert("AI failed to generate itinerary");
+        btn.disabled = false;
+        btn.innerText = "Generate Itinerary";
+        return;
+      }
+
+      // 🔹 2. Save trip to Firestore
+      // 🔹 2. Save trip to Firestore
+      const docRef = await addDoc(collection(db, "trips"), {
+  destination: data.destination,
+  daysCount: days,
+  budget,
+  preference,
+  startDate,
+  endDate,
+  total_estimated_cost: data.total_estimated_cost,
+  days: data.days,
+  createdAt: new Date()
+});
+
+
+
+ 
+
+//      const docRef = await addDoc(collection(db, "trips"), {
+//   destination,
+//   days,
+//   budget,
+//   preference,
+//   startDate,
+//   endDate,
+//   itinerary: data.itinerary,
+//   createdAt: new Date()
+// });
+
+    
+
+      // 🔹 3. Redirect to itinerary page with ID
+      window.location.href = `itinerary.html?id=${docRef.id}`;
+
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong. Check backend.");
+    } finally {
+      btn.disabled = false;
+      btn.innerText = "Generate Itinerary";
+    }
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Saved Trips | HiddenTrails.AI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen">
+
+<!-- NAVBAR -->
+
+<nav class="bg-white shadow px-6 py-4 flex justify-between items-center sticky top-0 z-50">
+  <h1 class="text-2xl font-bold text-green-600">HiddenTrails.AI</h1>
+  <div class="space-x-6">
+    <a href="index.html" class="text-gray-600 hover:text-green-600">Home</a>
+    <a href="dashboard.html" class="text-gray-600 hover:text-green-600">Dashboard</a>
+    <a href="saved.html" class="text-gray-600 hover:text-green-600">Saved</a>
+    <a href="auth.html" class="bg-green-600 text-white px-4 py-2 rounded-lg">Logout</a>
+  </div>
+</nav>
+<div class="flex min-h-[calc(100vh-72px)]">
+
+  <!-- SIDEBAR -->
+ 
+  <aside class="w-64 bg-white shadow p-5 space-y-4">
+    <a href="dashboard.html" class="block text-gray-700 hover:text-green-600">🏠 Dashboard</a>
+    <a href="plantrips.html" class="block text-gray-700 hover:text-green-600">🧭 Plan Trip</a>
+    <a href="saved.html" class="block font-semibold text-green-600">💾 Saved Trips</a>
+    <a href="rewards.html" class="block text-gray-700 hover:text-green-600">🎁 Rewards</a>
+  </aside>
+  <!-- MAIN -->
+  <main class="flex-1 p-8">
+    <h2 class="text-3xl font-bold text-center mb-6">Saved Itineraries</h2>
+    <div id="tripsContainer" class="space-y-5 max-w-4xl mx-auto"></div>
+  </main>
+
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+  import { getFirestore, collection, getDocs, orderBy, query } from
+    "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCtSKfk3j-RaExSaumaeGoQlJQckBDZ32c",
+    authDomain: "hiddentrails-ai.firebaseapp.com",
+    projectId: "hiddentrails-ai"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const container = document.getElementById("tripsContainer");
+
+  async function loadTrips() {
+    const q = query(collection(db, "trips"), orderBy("createdAt", "desc"));
+    const snapshot = await getDocs(q);
+
+    if (snapshot.empty) {
+      container.innerHTML = `<p class="text-center text-gray-500">No trips saved yet.</p>`;
+      return;
+    }
+
+    snapshot.forEach(doc => {
+      const t = doc.data();
+      const card = document.createElement("div");
+      card.className = "bg-white p-6 rounded-xl shadow";
+
+      card.innerHTML = `
+        <h3 class="text-xl font-bold">${t.destination} – ${t.days} Days</h3>
+        <p class="text-gray-600">Budget: ₹${t.budget || "-"}</p>
+        <p class="text-sm text-gray-500">${t.startDate || ""} → ${t.endDate || ""}</p>
+        <a href="itinerary.html?id=${doc.id}"
+           class="inline-block mt-3 bg-blue-600 text-white px-4 py-2 rounded">
+           View Itinerary
+        </a>
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  loadTrips();
+</script>
+
+</body>
+</html>

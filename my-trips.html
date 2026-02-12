@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>My Itineraries</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen">
+
+  <div class="max-w-6xl mx-auto p-8">
+    <h1 class="text-4xl font-bold mb-6 text-gray-800">
+      My Itineraries
+    </h1>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+      <div class="bg-white p-6 rounded-lg shadow">
+        <h2 class="text-xl font-semibold">Manali Trip</h2>
+        <p class="text-gray-600 mt-2">12 Jan – 18 Jan</p>
+        <p class="text-sm text-gray-500 mt-2">
+          Snow, mountains and peace.
+        </p>
+        <button class="mt-4 bg-green-600 text-white px-4 py-2 rounded">
+          View Itinerary
+        </button>
+      </div>
+
+      <div class="bg-white p-6 rounded-lg shadow">
+        <h2 class="text-xl font-semibold">Goa Trip</h2>
+        <p class="text-gray-600 mt-2">5 Feb – 10 Feb</p>
+        <p class="text-sm text-gray-500 mt-2">
+          Beaches and sunsets.
+        </p>
+        <button class="mt-4 bg-green-600 text-white px-4 py-2 rounded">
+          View Itinerary
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+
+    <div id="tripsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- Cards will be injected here -->
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
+    import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCtSKfk3j-RaExSaumaeGoQlJQckBDZ32c",
+      authDomain: "hiddentrails-ai.firebaseapp.com",
+      projectId: "hiddentrails-ai",
+      storageBucket: "hiddentrails-ai.firebasestorage.app",
+      messagingSenderId: "739490816318",
+      appId: "1:739490816318:web:3d1adc77b25cf1dfb70c6f"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const container = document.getElementById("tripsContainer");
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.location.href = "auth.html";
+        return;
+      }
+
+      const q = query(
+        collection(db, "itineraries"),
+        where("userId", "==", user.uid)
+      );
+
+      const snapshot = await getDocs(q);
+
+      if (snapshot.empty) {
+        container.innerHTML = `<p class="text-gray-500">No trips yet.</p>`;
+        return;
+      }
+
+      snapshot.forEach(doc => {
+        const t = doc.data();
+
+        const card = `
+          <div class="bg-white p-6 rounded-lg shadow">
+            <h2 class="text-xl font-semibold">${t.title}</h2>
+            <p class="text-gray-600 mt-2">${t.startDate} – ${t.endDate}</p>
+            <p class="text-sm text-gray-500 mt-2">${t.description}</p>
+            <button class="mt-4 bg-green-600 text-white px-4 py-2 rounded">
+              View Itinerary
+            </button>
+          </div>
+        `;
+
+        container.innerHTML += card;
+      });
+    });
+  </script>
+
+
+</body>
+</html>

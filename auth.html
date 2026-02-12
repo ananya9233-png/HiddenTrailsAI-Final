@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+  <meta charset="UTF-8" />
+  <title>Login | HiddenTrails.AI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gradient-to-br from-green-50 to-blue-50 min-h-screen">
+
+  <!-- NAVBAR -->
+  <nav class="bg-white shadow px-8 py-4 flex justify-between items-center">
+    <a href="index.html" class="text-2xl font-bold text-green-600">
+      HiddenTrails.AI
+    </a>
+  </nav>
+
+  <!-- LOGIN CARD -->
+  <div class="flex items-center justify-center min-h-[calc(100vh-80px)]">
+    <div class="bg-white p-8 rounded-2xl shadow-xl w-96">
+
+      <h2 class="text-2xl font-bold text-center text-green-600 mb-6">
+        Welcome Back
+      </h2>
+
+      <!-- EMAIL WITH @gmail.com -->
+      <div class="relative mb-4">
+        <input
+          id="email"
+          type="text"
+          placeholder="username"
+          class="w-full border p-3 pr-28 rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+        />
+        <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
+          @gmail.com
+        </span>
+      </div>
+
+      <!-- PASSWORD WITH SHOW/HIDE -->
+       <!-- PASSWORD -->
+<div class="relative mb-2">
+  <input
+    id="password"
+    type="password"
+    placeholder="Password"
+    class="w-full border p-3 rounded-lg pr-10 focus:ring-2 focus:ring-green-500 outline-none"
+  />
+
+  <!-- EYE ICON -->
+  <span
+    id="togglePassword"
+    class="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-500 select-none"
+    title="Show / Hide Password"
+  >
+    👁
+  </span>
+</div>
+
+      
+
+      <!-- FORGOT PASSWORD -->
+      <p class="text-right text-sm mb-4">
+        <a href="#" id="forgotPassword" class="text-green-600 hover:underline">
+          Forgot Password?
+        </a>
+      </p>
+
+      <!-- LOGIN BUTTON -->
+      <button
+        id="loginBtn"
+        class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition"
+      >
+        Login
+      </button>
+
+      <!-- SIGNUP LINK -->
+      <p class="text-center text-gray-500 mt-4 text-sm">
+        Don’t have an account?
+        <a href="signup.html" class="text-green-600 font-semibold hover:underline">
+          Create Account
+        </a>
+      </p>
+
+    </div>
+  </div>
+
+  <!-- FIREBASE SCRIPT -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      sendPasswordResetEmail
+    } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
+
+    // ✅ Firebase config (exact)
+    const firebaseConfig = {
+
+      
+      apiKey: "AIzaSyCtSKfk3j-RaExSaumaeGoQlJQckBDZ32c",
+      authDomain: "hiddentrails-ai.firebaseapp.com",
+      projectId: "hiddentrails-ai",
+      storageBucket: "hiddentrails-ai.firebasestorage.app",
+      messagingSenderId: "739490816318",
+      appId: "1:739490816318:web:3d1adc77b25cf1dfb70c6f"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    // 👁️ SHOW / HIDE PASSWORD
+    const togglePassword = document.getElementById("togglePassword");
+    const passwordInput = document.getElementById("password");
+
+    togglePassword.addEventListener("click", () => {
+      const isHidden = passwordInput.type === "password";
+      passwordInput.type = isHidden ? "text" : "password";
+      togglePassword.textContent = isHidden ? "🙈" : "👁️";
+    });
+
+    // EMAIL FORMAT
+    function getFullEmail(value) {
+      if (!value.includes("@")) {
+        return value + "@gmail.com";
+      }
+      return value;
+    }
+
+    // LOGIN
+    document.getElementById("loginBtn").addEventListener("click", () => {
+      let email = document.getElementById("email").value.trim();
+      const password = passwordInput.value.trim();
+
+      if (!email || !password) {
+        alert("All fields are required");
+        return;
+      }
+
+      email = getFullEmail(email);
+
+      if (password.length < 6) {
+        alert("Password must be at least 6 characters");
+        return;
+      }
+
+      signInWithEmailAndPassword(auth, email, password)
+        .then(() => {
+          alert("Login successful ✅");
+          window.location.href = "dashboard.html";
+        })
+        .catch(err => {
+          alert(err.code + " : " + err.message);
+        });
+    });
+
+    // FORGOT PASSWORD
+    document.getElementById("forgotPassword").addEventListener("click", () => {
+      let email = document.getElementById("email").value.trim();
+
+      if (!email) {
+        alert("Enter email first");
+        return;
+      }
+
+      email = getFullEmail(email);
+
+      sendPasswordResetEmail(auth, email)
+        .then(() => {
+          alert("Password reset link sent to your email 📩");
+        })
+        .catch(err => {
+          alert(err.code + " : " + err.message);
+          
+    
+        });
+    });
+  </script>
+
+</body>
+</html>
+xq
