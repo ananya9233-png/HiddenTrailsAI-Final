@@ -27,7 +27,46 @@
     <a href="saved.html" class="block text-gray-700 hover:text-green-600">💾 Saved Trips</a>
     <a href="rewards.html" class="block text-gray-700 hover:text-green-600">🎁 Rewards</a>
   </aside>
-  <main class="flex-1 p-8">
+  <main class="flex-1 p-8 relative">
+    <h2 class="text-3xl font-bold mb-6">Welcome 👋</h2>
+
+    <div class="grid grid-cols-2 gap-6">
+        <a href="plantrips.html"
+           class="bg-green-100 p-6 rounded-xl shadow hover:bg-green-200">
+            <h3 class="text-xl font-bold">Plan a New Trip</h3>
+            <p>Create AI-powered itineraries</p>
+        </a>
+
+        <a href="saved.html"
+           class="bg-blue-100 p-6 rounded-xl shadow hover:bg-blue-200">
+            <h3 class="text-xl font-bold">Saved Trips</h3>
+            <p>View your previous itineraries</p>
+        </a>
+    </div>
+
+    <!-- ✅ CHATBOX STARTS HERE -->
+    <div id="chatbox" class="chat-container">
+
+        <div class="chat-header">
+            <div class="chat-avatar">AI</div>
+            <div>
+                <b>HiddenTrails AI</b><br>
+                <small>Travel Assistant</small>
+            </div>
+        </div>
+
+        <div id="messages" class="chat-body"></div>
+
+        <div class="chat-input">
+            <input id="userInput" placeholder="Type a message..." />
+            <button onclick="sendMessage()">➤</button>
+        </div>
+
+    </div>
+    <!-- ✅ CHATBOX ENDS HERE -->
+
+</main>
+  <!-- <main class="flex-1 p-8 relative">
     <h2 class="text-3xl font-bold mb-6">Welcome 👋</h2>
 
     <div class="grid grid-cols-2 gap-6">
@@ -43,7 +82,17 @@
         <p>View your previous itineraries</p>
       </a>
     </div>
-  </main>
+    <div id="chatbox" class="chat-container"></div>
+    <div class="chat-header">
+    <div class="chat-avatar">AI</div>
+    <div>
+      <b>HiddenTrails AI</b><br>
+      <small>Travel Assistant</small>
+    </div>
+  </div>
+
+   
+  </main> -->
   <!-- 💜 Premium Chatbot UI -->
 <style>
 .chatbot-btn {
@@ -62,16 +111,17 @@
 
 .chat-container {
   position: fixed;
-  bottom: 90px;
-  right: 20px;
-  width: 340px;
-  height: 480px;
+  bottom: 110px;
+  right: 40px;
+  width: 380px;
+  height: 60vh;
   background: white;
   border-radius: 20px;
   box-shadow: 0 15px 40px rgba(0,0,0,0.25);
-  overflow: hidden;
-  display: none;
   font-family: Arial;
+
+  display: none;
+  flex-direction: column;
 }
 
 .chat-header {
@@ -95,37 +145,48 @@
   font-weight: bold;
 }
 
-.chat-body {
-  height: 320px;
-  overflow-y: auto;
-  padding: 12px;
-  background: #f9fafb;
+
+.msg-user,
+.msg-ai {
+  display: flex;
+  margin: 10px 0;
 }
 
 .msg-user {
-  text-align: right;
-  margin: 8px 0;
-}
-.msg-ai {
-  text-align: left;
-  margin: 8px 0;
+  justify-content: flex-end;
 }
 
+.msg-ai {
+  justify-content: flex-start;
+}
+
+.msg-user .bubble {
+  margin-right: 6px;
+}
+
+.msg-ai .bubble {
+  margin-left: 6px;
+}
 .bubble {
   display: inline-block;
-  padding: 8px 12px;
-  border-radius: 12px;
-  max-width: 70%;
+  padding: 10px 14px;
+  border-radius: 18px;
+  max-width: 80%;
+  word-wrap: break-word;
+  line-height: 1.5;
+  font-size: 14px;
 }
 
+
 .user-bubble {
-  background: #6366f1;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
   color: white;
 }
 
 .ai-bubble {
   background: white;
-  border: 1px solid #ddd;
+  border: 1px solid #eee;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
 }
 
 .chat-input {
@@ -137,7 +198,17 @@
   flex: 1;
   border: none;
   padding: 12px;
+  outline: none;
 }
+.chat-body {
+  flex: 1;              /* takes remaining height automatically */
+  overflow-y: auto;
+  padding-right: 20px;
+  padding: 16px;
+  background: #f9fafb;
+  scroll-behavior: smooth;
+}
+
 
 .chat-input button {
   background: #6366f1;
@@ -151,28 +222,11 @@
 
 <button class="chatbot-btn" onclick="toggleChat()">💬</button>
 
-<div id="chatbox" class="chat-container">
-
-  <div class="chat-header">
-    <div class="chat-avatar">AI</div>
-    <div>
-      <b>HiddenTrails AI</b><br>
-      <small>Travel Assistant</small>
-    </div>
-  </div>
-
-  <div id="messages" class="chat-body"></div>
-
-  <div class="chat-input">
-    <input id="userInput" placeholder="Type a message..." />
-    <button onclick="sendMessage()">➤</button>
-  </div>
-
-</div>
 <script>
-function toggleChat() {
+  function toggleChat() {
   const box = document.getElementById("chatbox");
-  box.style.display = box.style.display === "block" ? "none" : "block";
+  box.style.display =
+    box.style.display === "flex" ? "none" : "flex";
 }
 
 // 🔥 ENTER key support
@@ -181,33 +235,37 @@ document.getElementById("userInput").addEventListener("keypress", function (e) {
     sendMessage();
   }
 });
-
+function formatReply(text) {
+  return text
+    .replace(/\n/g, "<br>")
+    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+}
 async function sendMessage() {
   try {
     const input = document.getElementById("userInput");
     const message = input.value.trim();
-
     if (!message) return;
 
     const msgBox = document.getElementById("messages");
 
     // 👤 User message
-    msgBox.innerHTML += `
+    msgBox.insertAdjacentHTML("beforeend", `
       <div class="msg-user">
         <div class="bubble user-bubble">${message}</div>
       </div>
-    `;
+    `);
 
     input.value = "";
     msgBox.scrollTop = msgBox.scrollHeight;
 
     // 🤖 Typing indicator
     const typingId = "typing-" + Date.now();
-    msgBox.innerHTML += `
+    msgBox.insertAdjacentHTML("beforeend", `
       <div id="${typingId}" class="msg-ai">
         <div class="bubble ai-bubble">Typing...</div>
       </div>
-    `;
+    `);
+
     msgBox.scrollTop = msgBox.scrollHeight;
 
     // 🔥 Backend call
@@ -219,22 +277,21 @@ async function sendMessage() {
       body: JSON.stringify({ message })
     });
 
-    // ❌ Server error
-    if (!res.ok) {
-      throw new Error("Server not responding");
-    }
+    if (!res.ok) throw new Error("Server not responding");
 
     const data = await res.json();
 
-    // Remove typing
+    // Remove typing indicator
     document.getElementById(typingId)?.remove();
 
     // 🤖 AI reply
-    msgBox.innerHTML += `
+    msgBox.insertAdjacentHTML("beforeend", `
       <div class="msg-ai">
-        <div class="bubble ai-bubble">${data.reply || "No response"}</div>
+        <div class="bubble ai-bubble">
+          ${formatReply(data.reply || "No response")}
+        </div>
       </div>
-    `;
+    `);
 
     msgBox.scrollTop = msgBox.scrollHeight;
 
@@ -243,15 +300,17 @@ async function sendMessage() {
 
     const msgBox = document.getElementById("messages");
 
-    msgBox.innerHTML += `
+    msgBox.insertAdjacentHTML("beforeend", `
       <div class="msg-ai">
         <div class="bubble ai-bubble">
           ⚠️ Chatbot not connected. Check backend server.
         </div>
       </div>
-    `;
+    `);
   }
 }
+
+  
 </script>
 
 </body>
