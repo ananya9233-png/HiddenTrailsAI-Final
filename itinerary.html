@@ -19,18 +19,35 @@
   </div>
 </nav>
 
-<div class="flex min-h-[calc(100vh-72px)]">
+<div class="flex">
 
   <!-- SIDEBAR -->
-  <aside class="w-64 bg-white shadow p-5 space-y-4">
-    <a href="dashboard.html" class="block text-gray-700 hover:text-green-600">🏠 Dashboard</a>
-    <a href="plantrips.html" class="block text-gray-700 hover:text-green-600">🧭 Plan Trip</a>
-    <a href="saved.html" class="block font-semibold text-green-600">💾 Saved Trips</a>
-    <a href="rewards.html" class="block text-gray-700 hover:text-green-600">🎁 Rewards</a>
-  </aside>
+   <aside class="w-64 bg-white shadow p-5 space-y-4 
+              fixed top-16 left-0 h-[calc(100vh-64px)] 
+              overflow-y-auto">
+
+  <a href="dashboard.html" class="block text-gray-700 hover:text-green-600">
+    🏠 Dashboard
+  </a>
+
+  <a href="plantrips.html" class="block font-semibold text-green-600">
+    🧭 Plan Trip
+  </a>
+
+  <a href="saved.html" class="block text-gray-700 hover:text-green-600">
+    💾 Saved Trips
+  </a>
+
+  <a href="rewards.html" class="block text-gray-700 hover:text-green-600">
+    🎁 Rewards
+  </a>
+
+</aside>
+
 
   <!-- MAIN CONTENT -->
-  <main class="flex-1 p-8">
+   <main class="flex-1 p-8 ml-64">
+  
     <div class="max-w-4xl mx-auto space-y-6">
 
       <h2 id="pageTitle" class="text-3xl font-bold text-center">
@@ -45,7 +62,7 @@
     <p id="budgetInfo" class="text-lg mt-2"></p>
   </div>
 </div>
-
+<div id="hiddenScore" class="text-center text-green-600 font-semibold"></div>
 <div id="daysContainer" class="space-y-6"></div>
 
       <div class="flex justify-center gap-4 mt-6">
@@ -98,21 +115,20 @@ const regenBtn = document.getElementById("regenBtn");
 let trip;
 
 // ✅ Unsplash Function
-async function getUnsplashImage(query) {
-  const accessKey = "YOUR_UNSPLASH_ACCESS_KEY";
-
+async function getDestinationImage(query) {
   const res = await fetch(
-    `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=1&orientation=landscape&client_id=${accessKey}`
+    `http://127.0.0.1:5000/get-destination-image?query=${encodeURIComponent(query)}`
   );
 
   const data = await res.json();
-
-  if (data.results && data.results.length > 0) {
-    return data.results[0].urls.regular;
-  }
-
-  return "https://via.placeholder.com/800x500?text=No+Image";
+  return data.image;
 }
+
+
+
+
+
+
 
 // ✅ Load Trip
 // ✅ Load Trip
@@ -127,13 +143,22 @@ async function loadTrip() {
 
   trip = snap.data();
 
-  // Hero Image
-  heroImage.src = await getUnsplashImage(
-    trip.destination + " skyline"
-  );
+  // ✅ Hidden Score (after trip is defined)
+  const hiddenScoreDiv = document.getElementById("hiddenScore");
+  if (trip.hidden_score) {
+    hiddenScoreDiv.innerText = `Hidden Score: ${trip.hidden_score}/10 🔥`;
+  }
 
-  tripTitle.innerText =
-    `${trip.destination} – ${trip.days.length} Day ${trip.preference} Trip`;
+  // Hero Image
+  heroImage.src = await getDestinationImage(trip.destination);
+ 
+  
+  
+  const style = trip.trip_style ?? trip.preference ?? "Custom";
+
+tripTitle.innerText =
+  `${trip.destination} – ${trip.days.length} Day ${style} Trip`;
+
 
   budgetInfo.innerText =
     `Budget: ₹${trip.budget} | Estimated: ₹${trip.total_estimated_cost}`;
@@ -143,10 +168,13 @@ async function loadTrip() {
   for (const day of trip.days) {
     const card = document.createElement("div");
     card.className = "bg-white p-6 rounded-xl shadow";
+    const imageUrl = await getDestinationImage(
+  `${trip.destination} ${day.title} cinematic travel photography`
+);
+  
+    
 
-    const imageUrl = await getUnsplashImage(
-      trip.destination + " " + day.title + " landmark"
-    );
+    
 
     card.innerHTML = `
       <h2 class="text-2xl font-bold mb-3">
@@ -158,9 +186,23 @@ async function loadTrip() {
         class="rounded-lg mb-4 w-full h-56 object-cover"
       >
 
-      <p><strong>Morning:</strong> ${day.morning}</p>
-      <p><strong>Afternoon:</strong> ${day.afternoon}</p>
-      <p><strong>Evening:</strong> ${day.evening}</p>
+      <div class="space-y-3 text-gray-700 leading-relaxed">
+  <div>
+    <span class="text-sm uppercase tracking-wide text-gray-400">Morning</span>
+    <p class="mt-1">${day.morning}</p>
+  </div>
+
+  <div>
+    <span class="text-sm uppercase tracking-wide text-gray-400">Afternoon</span>
+    <p class="mt-1">${day.afternoon}</p>
+  </div>
+
+  <div>
+    <span class="text-sm uppercase tracking-wide text-gray-400">Evening</span>
+    <p class="mt-1">${day.evening}</p>
+  </div>
+</div>
+
 
       <p class="mt-3 font-semibold text-green-600">
         Estimated Cost: ₹${day.estimated_cost}
@@ -170,6 +212,7 @@ async function loadTrip() {
     daysContainer.appendChild(card);
   }
 }
+
 
 // IMPORTANT: Call it OUTSIDE the function
 loadTrip();
@@ -186,7 +229,7 @@ regenBtn.addEventListener("click", async () => {
     body: JSON.stringify({
       destination: trip.destination,
       days: trip.days.length,
-      preference: trip.preference,
+        preference: trip.trip_style,   // ✅ correct
       budget: trip.budget
     })
   });
@@ -199,10 +242,18 @@ regenBtn.addEventListener("click", async () => {
   }
 
   await updateDoc(doc(db, "trips", id), {
-    total_estimated_cost: newData.total_estimated_cost,
-    days: newData.days,
-    regeneratedAt: new Date()
-  });
+  trip_style: newData.trip_style,
+  hidden_score: newData.hidden_score,
+  stay_recommendations: newData.stay_recommendations,
+  food_spots: newData.food_spots,
+  experiences: newData.experiences,
+  budget_breakdown: newData.budget_breakdown,
+  total_estimated_cost: newData.total_estimated_cost,
+  days: newData.days,
+  regeneratedAt: new Date()
+});
+
+ 
 
   alert("Itinerary regenerated!");
   location.reload();

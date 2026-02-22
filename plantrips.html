@@ -19,18 +19,35 @@
   </div>
 </nav>
 
-<div class="flex min-h-[calc(100vh-72px)]">
+<div class="flex">
 
   <!-- SIDEBAR -->
-  <aside class="w-64 bg-white shadow p-5 space-y-4">
-    <a href="dashboard.html" class="block text-gray-700 hover:text-green-600">🏠 Dashboard</a>
-    <a href="plantrips.html" class="block font-semibold text-green-600">🧭 Plan Trip</a>
-    <a href="saved.html" class="block text-gray-700 hover:text-green-600">💾 Saved Trips</a>
-    <a href="rewards.html" class="block text-gray-700 hover:text-green-600">🎁 Rewards</a>
-  </aside>
+   <aside class="w-64 bg-white shadow p-5 space-y-4 
+              fixed top-16 left-0 h-[calc(100vh-64px)] 
+              overflow-y-auto">
+
+  <a href="dashboard.html" class="block text-gray-700 hover:text-green-600">
+    🏠 Dashboard
+  </a>
+
+  <a href="plantrips.html" class="block font-semibold text-green-600">
+    🧭 Plan Trip
+  </a>
+
+  <a href="saved.html" class="block text-gray-700 hover:text-green-600">
+    💾 Saved Trips
+  </a>
+
+  <a href="rewards.html" class="block text-gray-700 hover:text-green-600">
+    🎁 Rewards
+  </a>
+
+</aside>
+  
 
   <!-- MAIN CONTENT -->
-  <main class="flex-1 p-8">
+ 
+     <main class="flex-1 p-8 ml-64">
     <div class="max-w-3xl mx-auto bg-white p-8 rounded-xl shadow">
 
       <h2 class="text-3xl font-bold mb-6 text-center">Plan Your Trip ✈️</h2>
@@ -46,12 +63,12 @@
         <div class="grid grid-cols-2 gap-4">
           <div>
             <label class="block font-semibold">Arrival Date</label>
-            <input id="startDate" type="date"
+            <input id="arrivalDate" type="date"
               class="w-full border rounded-lg px-4 py-2">
           </div>
           <div>
             <label class="block font-semibold">Return Date</label>
-            <input id="endDate" type="date"
+            <input id="returnDate" type="date"
               class="w-full border rounded-lg px-4 py-2">
           </div>
         </div>
@@ -81,12 +98,11 @@
           </select>
         </div>
 
-        <button
-          type="submit"
-          id="generateBtn"
-          class="w-full bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700">
-          Generate Itinerary
-        </button>
+        <button type="submit" id="generateBtn" class="w-full bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700">
+  Generate Itinerary
+</button>
+
+       
 
       </form>
 
@@ -96,128 +112,103 @@
 </div>
 
 <!-- SCRIPT -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
-  import {
-    getFirestore,
-    collection,
-    addDoc
-  } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+ <script type="module">
 
-  // 🔹 Firebase config
-  const firebaseConfig = {
-    apiKey: "AIzaSyCtSKfk3j-RaExSaumaeGoQlJQckBDZ32c",
-    authDomain: "hiddentrails-ai.firebaseapp.com",
-    projectId: "hiddentrails-ai",
-    storageBucket: "hiddentrails-ai.firebasestorage.app",
-    messagingSenderId: "739490816318",
-    appId: "1:739490816318:web:3d1adc77b25cf1dfb70c6f"
-  };
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+import {
+  getFirestore,
+  collection,
+  addDoc
+} from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+const firebaseConfig = {
+  apiKey: "AIzaSyCtSKfk3j-RaExSaumaeGoQlJQckBDZ32c",
+  authDomain: "hiddentrails-ai.firebaseapp.com",
+  projectId: "hiddentrails-ai",
+};
 
-  const form = document.getElementById("tripForm");
-  const btn = document.getElementById("generateBtn");
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
+const form = document.getElementById("tripForm");
+const btn = document.getElementById("generateBtn");
 
-    const destination = document.getElementById("destination").value.trim();
-    const days = parseInt(document.getElementById("days").value);
-    const budget = parseInt(document.getElementById("budget").value);
-    const preference = document.getElementById("preference").value;
-    const startDate = document.getElementById("startDate").value;
-    const endDate = document.getElementById("endDate").value;
-    if (!destination || !days || !budget || !preference) {
-  alert("Please fill all required fields including budget");
-  btn.disabled = false;
-  btn.innerText = "Generate Itinerary";
-  return;
-}
+form.addEventListener("submit", async function (e) {
+  e.preventDefault();
 
-    
+  const destination = document.getElementById("destination").value.trim();
+  const budget = parseInt(document.getElementById("budget").value);
+  const preference = document.getElementById("preference").value;
 
-    btn.disabled = true;
-    btn.innerText = "Generating...";
+  const arrivalDate = document.getElementById("arrivalDate").value;
+  const returnDate = document.getElementById("returnDate").value;
 
-    try {
-      // 🔹 1. Call Groq backend
-      const response = await fetch("http://127.0.0.1:5000/generate-itinerary", {
+  const diffTime = new Date(returnDate) - new Date(arrivalDate);
+  const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
+  if (days <= 0) {
+    alert("Return date must be after arrival date.");
+    return;
+  }
+
+  if (!destination || !budget || !preference || !arrivalDate || !returnDate) {
+    alert("Please fill all required fields");
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerText = "Generating...";
+
+  try {
+    const response = await fetch("http://127.0.0.1:5000/generate-itinerary", {
       method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-  destination,
-  days,
-  preference,
-  budget
-})
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        destination,
+        days,
+        preference,
+        budget
+      })
+    });
 
-        // body: JSON.stringify({ destination, days })
-      });
-     if (!response.ok) {
-  const errData = await response.json();
-  console.error("Backend Error:", errData);
-  alert("Backend error: " + errData.error);
-  return;
-}
+    if (!response.ok) {
+      const errData = await response.json();
+      alert("Backend error: " + errData.error);
+      return;
+    }
 
-const data = await response.json();
+    const data = await response.json();
 
-      
-      if (!data || !data.days || !Array.isArray(data.days)) {
+    if (!data || !Array.isArray(data.days)) {
+      alert("AI failed to generate itinerary");
+      return;
+    }
 
-      
-        alert("AI failed to generate itinerary");
-        btn.disabled = false;
-        btn.innerText = "Generate Itinerary";
-        return;
-      }
+    const docRef = await addDoc(collection(db, "trips"), {
+      destination,
+      daysCount: days,
+      budget,
+      preference,
+      arrivalDate,
+      returnDate,
+      total_estimated_cost: data.total_estimated_cost,
+      days: data.days,
+      createdAt: new Date()
+    });
 
-      // 🔹 2. Save trip to Firestore
-      // 🔹 2. Save trip to Firestore
-      const docRef = await addDoc(collection(db, "trips"), {
-  destination: data.destination,
-  daysCount: days,
-  budget,
-  preference,
-  startDate,
-  endDate,
-  total_estimated_cost: data.total_estimated_cost,
-  days: data.days,
-  createdAt: new Date()
+    window.location.href = `itinerary.html?id=${docRef.id}`;
+
+  } catch (err) {
+    console.error(err);
+    alert("Something went wrong.");
+  } finally {
+    btn.disabled = false;
+    btn.innerText = "Generate Itinerary";
+  }
 });
 
-
-
- 
-
-//      const docRef = await addDoc(collection(db, "trips"), {
-//   destination,
-//   days,
-//   budget,
-//   preference,
-//   startDate,
-//   endDate,
-//   itinerary: data.itinerary,
-//   createdAt: new Date()
-// });
-
-    
-
-      // 🔹 3. Redirect to itinerary page with ID
-      window.location.href = `itinerary.html?id=${docRef.id}`;
-
-    } catch (err) {
-      console.error(err);
-      alert("Something went wrong. Check backend.");
-    } finally {
-      btn.disabled = false;
-      btn.innerText = "Generate Itinerary";
-    }
-  });
 </script>
+
 
 </body>
 </html>

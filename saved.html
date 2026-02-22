@@ -61,22 +61,46 @@
       return;
     }
 
-    snapshot.forEach(doc => {
-      const t = doc.data();
-      const card = document.createElement("div");
-      card.className = "bg-white p-6 rounded-xl shadow";
+    snapshot.forEach(docSnap => {
+  const t = docSnap.data();
+  const daysCount = t.days?.length || 0;
+  const style = t.trip_style || "Custom";
 
-      card.innerHTML = `
-        <h3 class="text-xl font-bold">${t.destination} – ${t.days} Days</h3>
-        <p class="text-gray-600">Budget: ₹${t.budget || "-"}</p>
-        <p class="text-sm text-gray-500">${t.startDate || ""} → ${t.endDate || ""}</p>
-        <a href="itinerary.html?id=${doc.id}"
-           class="inline-block mt-3 bg-blue-600 text-white px-4 py-2 rounded">
-           View Itinerary
-        </a>
-      `;
-      container.appendChild(card);
-    });
+ 
+  const card = document.createElement("a");
+card.href = `itinerary.html?id=${docSnap.id}`;
+  card.className = "bg-white rounded-xl shadow-lg overflow-hidden transform hover:scale-[1.02] hover:shadow-2xl transition duration-300";
+  
+  card.innerHTML = `
+    <div class="h-48 overflow-hidden">
+      <img src="${t.hero_image || 'https://picsum.photos/800/400'}"
+           class="w-full h-full object-cover">
+    </div>
+
+    <div class="p-6">
+      <h3 class="text-xl font-bold">
+        ${t.destination} – ${daysCount} Day ${style} Trip
+      </h3>
+
+      <p class="text-gray-600 mt-1">
+        Budget: ₹${t.budget || "-"} | Estimated: ₹${t.total_estimated_cost || "-"}
+      </p>
+
+      <p class="text-sm text-green-600 mt-1">
+        Hidden Score: ${t.hidden_score || "-"} / 10
+      </p>
+
+      <a href="itinerary.html?id=${docSnap.id}"
+         class="inline-block mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+         View Itinerary →
+      </a>
+    </div>
+  `;
+
+  container.appendChild(card);
+});
+
+    
   }
 
   loadTrips();
