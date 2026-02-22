@@ -156,7 +156,11 @@ Cost logic must match travel style.
 Luxury cannot be budget backpacking.
 Adventure cannot have zero activity cost.
 Stay recommendation must influence daily plan location.
-All activities should be within 5–7 km of stay.
+All activities should be within 20-30 km of stay.
+Every day MUST include meaningful morning, afternoon and evening activities.
+Never return "N/A".
+Never leave any time block empty.
+If departure day, still suggest a short evening micro-experience.
 
 If a location appears in top 4 Google tourist results, avoid it.
 Focus on:
@@ -220,9 +224,9 @@ Return ONLY this JSON structure:
     {
       "day": 1,
       "title": "",
-      "morning": "Detailed 2-3 sentence immersive description",
-"afternoon": "Detailed 2-3 sentence immersive description",
-"evening": "Detailed 2-3 sentence immersive description",
+      "morning": "Detailed 7-8 sentence immersive description",
+"afternoon": "Detailed 7-8 sentence immersive description",
+"evening": "Detailed 7-8 sentence immersive description",
     
       "estimated_cost": 0
     }

@@ -51,7 +51,7 @@
     <div class="max-w-4xl mx-auto space-y-6">
 
       <h2 id="pageTitle" class="text-3xl font-bold text-center">
-        Loading Itinerary...
+        Itinerary
       </h2>
 
       
@@ -115,104 +115,129 @@ const regenBtn = document.getElementById("regenBtn");
 let trip;
 
 // ✅ Unsplash Function
-async function getDestinationImage(query) {
-  const res = await fetch(
-    `http://127.0.0.1:5000/get-destination-image?query=${encodeURIComponent(query)}`
-  );
-
-  const data = await res.json();
-  return data.image;
-}
-
-
-
-
-
-
-
-// ✅ Load Trip
-// ✅ Load Trip
 async function loadTrip() {
-  const docRef = doc(db, "trips", id);
-  const snap = await getDoc(docRef);
+  try {
+    const docRef = doc(db, "trips", id);
+    const snap = await getDoc(docRef);
 
-  if (!snap.exists()) {
-    daysContainer.innerHTML = "Trip not found.";
-    return;
-  }
+    if (!snap.exists()) {
+      daysContainer.innerHTML = "Trip not found.";
+      return;
+    }
 
-  trip = snap.data();
+    trip = snap.data();
 
-  // ✅ Hidden Score (after trip is defined)
-  const hiddenScoreDiv = document.getElementById("hiddenScore");
-  if (trip.hidden_score) {
-    hiddenScoreDiv.innerText = `Hidden Score: ${trip.hidden_score}/10 🔥`;
-  }
+    // Hidden score
+    if (trip.hidden_score) {
+      document.getElementById("hiddenScore").innerText =
+        `Hidden Score: ${trip.hidden_score}/10 🔥`;
+    }
 
-  // Hero Image
-  heroImage.src = await getDestinationImage(trip.destination);
- 
-  
-  
-  const style = trip.trip_style ?? trip.preference ?? "Custom";
+    // Hero image
+    heroImage.src = await getDestinationImage(trip.destination);
 
-tripTitle.innerText =
-  `${trip.destination} – ${trip.days.length} Day ${style} Trip`;
+    const style = trip.trip_style ?? trip.preference ?? "Custom";
 
+    tripTitle.innerText =
+      `${trip.destination} – ${trip.days.length} Day ${style} Trip`;
 
-  budgetInfo.innerText =
-    `Budget: ₹${trip.budget} | Estimated: ₹${trip.total_estimated_cost}`;
+    budgetInfo.innerText =
+      `Budget: ₹${trip.budget} | Estimated: ₹${trip.total_estimated_cost}`;
 
-  daysContainer.innerHTML = "";
+    daysContainer.innerHTML = "";
 
-  for (const day of trip.days) {
-    const card = document.createElement("div");
-    card.className = "bg-white p-6 rounded-xl shadow";
-    const imageUrl = await getDestinationImage(
-  `${trip.destination} ${day.title} cinematic travel photography`
+    let imagesUpdated = false;
+
+    for (const day of trip.days) {
+
+      const card = document.createElement("div");
+      card.className = "bg-white p-6 rounded-xl shadow";
+
+      let imageUrl = day.image;
+
+      if (!imageUrl) {
+        const safeTitle = day.title || `Day ${day.day}`;
+
+imageUrl = await getDestinationImage(
+  `${trip.destination} ${safeTitle} travel photography`
 );
-  
-    
+       
+        day.image = imageUrl;
+        imagesUpdated = true;
+      }
 
-    
+      card.innerHTML = `
+        <h2 class="text-2xl font-bold mb-3">
+          Day ${day.day}: ${day.title}
+        </h2>
 
-    card.innerHTML = `
-      <h2 class="text-2xl font-bold mb-3">
-        Day ${day.day}: ${day.title}
-      </h2>
+        <img 
+          src="${imageUrl}" 
+          class="rounded-lg mb-4 w-full h-56 object-cover"
+        >
 
-      <img 
-        src="${imageUrl}" 
-        class="rounded-lg mb-4 w-full h-56 object-cover"
-      >
+        <div class="space-y-3 text-gray-700 leading-relaxed">
+          <div>
+            <span class="text-sm uppercase tracking-wide text-gray-400">Morning</span>
+            <p class="mt-1">${day.morning}</p>
+          </div>
 
-      <div class="space-y-3 text-gray-700 leading-relaxed">
-  <div>
-    <span class="text-sm uppercase tracking-wide text-gray-400">Morning</span>
-    <p class="mt-1">${day.morning}</p>
-  </div>
+          <div>
+            <span class="text-sm uppercase tracking-wide text-gray-400">Afternoon</span>
+            <p class="mt-1">${day.afternoon}</p>
+          </div>
 
-  <div>
-    <span class="text-sm uppercase tracking-wide text-gray-400">Afternoon</span>
-    <p class="mt-1">${day.afternoon}</p>
-  </div>
+          <div>
+            <span class="text-sm uppercase tracking-wide text-gray-400">Evening</span>
+            <p class="mt-1">
+              ${day.evening && day.evening !== "N/A"
+                ? day.evening
+                : "Wrap up the day with a relaxed local dinner nearby."}
+            </p>
+          </div>
+        </div>
 
-  <div>
-    <span class="text-sm uppercase tracking-wide text-gray-400">Evening</span>
-    <p class="mt-1">${day.evening}</p>
-  </div>
-</div>
+        <p class="mt-3 font-semibold text-green-600">
+          Estimated Cost: ₹${day.estimated_cost}
+        </p>
+      `;
 
+      daysContainer.appendChild(card);
+    }
 
-      <p class="mt-3 font-semibold text-green-600">
-        Estimated Cost: ₹${day.estimated_cost}
-      </p>
-    `;
+    // Save images only if new ones were added
+    if (imagesUpdated) {
+      await updateDoc(doc(db, "trips", id), {
+        days: trip.days
+      });
+    }
 
-    daysContainer.appendChild(card);
+  } catch (err) {
+    console.error("LoadTrip Error:", err);
+    daysContainer.innerHTML = "Something went wrong loading this trip.";
   }
 }
 
+
+
+async function getDestinationImage(query) {
+  try {
+    const res = await fetch(
+      `http://127.0.0.1:5000/get-destination-image?query=${encodeURIComponent(query)}`
+    );
+
+    if (!res.ok) {
+      throw new Error("Image API failed");
+    }
+
+    const data = await res.json();
+    return data.image;
+
+  } catch (err) {
+    console.error("Image fetch failed:", err);
+    return "https://picsum.photos/800/400"; // fallback image
+  }
+}
 
 // IMPORTANT: Call it OUTSIDE the function
 loadTrip();
