@@ -177,24 +177,42 @@ form.addEventListener("submit", async function (e) {
       return;
     }
 
+   
+
     const data = await response.json();
 
-    if (!data || !Array.isArray(data.days)) {
-      alert("AI failed to generate itinerary");
-      return;
-    }
+if (!data || !Array.isArray(data.days)) {
+  alert("AI failed to generate itinerary");
+  return;
+}
 
-    const docRef = await addDoc(collection(db, "trips"), {
-      destination,
-      daysCount: days,
-      budget,
-      preference,
-      arrivalDate,
-      returnDate,
-      total_estimated_cost: data.total_estimated_cost,
-      days: data.days,
-      createdAt: new Date()
-    });
+/* 🔥 STEP 1: FETCH DESTINATION IMAGE */
+const imageRes = await fetch(
+  `http://127.0.0.1:5000/get-destination-image?query=${destination}`
+);
+
+const imageData = await imageRes.json();
+
+/* attach image */
+const heroImage = imageData.image;
+
+const docRef = await addDoc(collection(db, "trips"), {
+  destination,
+  daysCount: days,
+  budget,
+  preference,
+  arrivalDate,
+  returnDate,
+  total_estimated_cost: data.total_estimated_cost,
+  days: data.days,
+
+  /* ✅ SAVE IMAGE HERE */
+  hero_image: heroImage,
+
+  createdAt: new Date()
+});
+
+    
 
     window.location.href = `itinerary.html?id=${docRef.id}`;
 

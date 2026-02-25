@@ -28,26 +28,32 @@ app.post("/chat", async (req, res) => {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "llama-3.1-8b-instant",
+        model: "llama-3.3-70b-versatile",
+
         messages: [
-          {
-  role: "system",
-  content: `
+  {
+    role: "system",
+    content: `
 You are HiddenTrails AI, a concise travel planning assistant.
 
 Rules:
-- Maximum 4 short sentences.
-- No long introductions.
-- No storytelling.
+- Minimum 5 sentences.
+- long introductions.
+- storytelling can be there.
 - Be direct and helpful.
 - Always suggest next action.
 - Use bullet points when suggesting options.
-- Keep responses under 80 words.
+- Keep responses under 200 words.
 - Sound friendly but efficient.
 `
-}
-         
-        ],
+  },
+  {
+    role: "user",
+    content: message   // ✅ THIS IS THE FIX
+  }
+],
+       
+        
         max_tokens: 120,
 temperature: 0.7,
       })
@@ -80,6 +86,18 @@ const budget = Number(req.body.budget);
   }
 
   try {
+   
+
+  const dayTemplate = Array.from({ length: days }, (_, i) => `
+    {
+      "day": ${i + 1},
+      "title": "",
+      "morning": "",
+      "afternoon": "",
+      "evening": "",
+      "estimated_cost": 0
+    }`).join(",");
+
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -87,7 +105,8 @@ const budget = Number(req.body.budget);
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "llama-3.1-8b-instant",
+        model: "llama-3.3-70b-versatile",
+        
         messages: [
   {
   role: "system",
@@ -191,7 +210,14 @@ Create a ${days}-day ${preference} hidden-gem itinerary for ${destination}.
 
 User Budget: ₹${budget}
 
+
 Return ONLY this JSON structure:
+CRITICAL REQUIREMENT:
+- Each morning, afternoon, and evening field must contain at least 7–8 full sentences.
+- Each description must be minimum 90 words.
+- Do NOT summarize.
+- Do NOT write one-line activities.
+- Write immersive storytelling paragraphs.
 
 {
   "destination": "",
@@ -221,16 +247,9 @@ Return ONLY this JSON structure:
     }
   ],
   "days": [
-    {
-      "day": 1,
-      "title": "",
-      "morning": "Detailed 7-8 sentence immersive description",
-"afternoon": "Detailed 7-8 sentence immersive description",
-"evening": "Detailed 7-8 sentence immersive description",
-    
-      "estimated_cost": 0
-    }
-  ],
+${dayTemplate}
+],
+
   "budget_breakdown": {
     "stay_total": 0,
     "food_total": 0,
@@ -242,9 +261,9 @@ Return ONLY this JSON structure:
 `
   }
 ],
- response_format: { type: "json_object" },
-  temperature: 0.2,
-  max_tokens: 900
+//  response_format: { type: "json_object" },
+  temperature: 0.3,
+  max_tokens: 4000
 })
 // temperature: 0.3,
 // max_tokens: 800
@@ -257,16 +276,45 @@ Return ONLY this JSON structure:
     console.log("AI RAW RESPONSE:", JSON.stringify(data, null, 2));
 
 if (!data.choices || !data.choices[0]) {
-  console.error("Groq Error:", data);
-  return res.status(500).json({ error: "AI response invalid" });
+  console.error("Groq Full Response:", JSON.stringify(data, null, 2));
+  return res.status(500).json({
+    error: data.error?.message || "AI response invalid"
+  });
 }
 
-const aiText = data.choices[0].message?.content;
+
+let aiText = data.choices[0].message?.content || "";
+
+// Remove markdown code blocks if present
+aiText = aiText.replace(/```json/g, "")
+               .replace(/```/g, "")
+               .trim();
+
+// Try to extract JSON part only
+const firstBrace = aiText.indexOf("{");
+const lastBrace = aiText.lastIndexOf("}");
+
+if (firstBrace !== -1 && lastBrace !== -1) {
+  aiText = aiText.substring(firstBrace, lastBrace + 1);
+}
+
 
 let structuredData;
 
 try {
   structuredData = JSON.parse(aiText);
+  for (const day of structuredData.days) {
+  if (
+    day.morning.split(".").length < 6 ||
+    day.afternoon.split(".").length < 6 ||
+    day.evening.split(".").length < 6
+  ) {
+    console.log("AI returned short descriptions. Forcing regeneration.");
+    return res.status(500).json({
+      error: "Descriptions too short. Please regenerate."
+    });
+  }
+}
 
 // Add realistic stay calculation
 // Ensure budget_breakdown exists
